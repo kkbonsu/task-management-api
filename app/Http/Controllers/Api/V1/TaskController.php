@@ -8,8 +8,6 @@ use App\Http\Requests\Api\V1\UpdateTaskRequest;
 use App\Http\Requests\Api\V1\ReplaceTaskRequest;
 use App\Http\Resources\V1\TaskResource;
 use App\Models\Task;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use App\Models\User;
 
 class TaskController extends ApiController
 {
@@ -37,38 +35,19 @@ class TaskController extends ApiController
      */
     public function store(StoreTaskRequest $request)
     {
-        try {
-            $user = User::findOrFail($request->input('data.relationships.creator.data.id'));
-        } catch (ModelNotFoundException $e) {
-            return $this->ok('User not found', [
-                'error' => 'The provided user ID does not exist'
-            ]);
-        }
-
-        $model = [
-            'user_id' => $request->input('data.relationships.creator.data.id'),
-            'title' => $request->input('data.attributes.title'),
-            'description' => $request->input('data.attributes.description'),
-            'status' => $request->input('data.attributes.status'),
-        ];
-        return new TaskResource(Task::create($model));
+        $task = Task::create($request->validated());
+        return new TaskResource($task);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($task_id)
+    public function show(Task $task)
     {
-        try {
-            $task = Task::findOrFail($task_id);
-
-            if ($this->include('creator')) {
-                return new TaskResource($task->load('user'));
-            }
-            return new TaskResource($task);
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('Task cannot be found', 404);
+        if ($this->include('creator')) {
+            return new TaskResource($task->load('user'));
         }
+        return new TaskResource($task);
     }
 
     /**
@@ -84,41 +63,26 @@ class TaskController extends ApiController
      */
     public function update(UpdateTaskRequest $request, Task $task)
     {
-        //
+        $task->update($request->validated());
+        return new TaskResource($task);
     }
 
-    public function replace(ReplaceLoanRequest $request, $task_id)
+    public function replace(ReplaceTaskRequest $request, Task $task)
     {
-        try {
-            $task = Task::findOrFail($task_id);
+        $task->update($request->validated());
 
-            $task->title = $request->input('data.attributes.title');
-            $task->description = $request->input('data.attributes.description');
-            $task->status = $request->input('data.attributes.status');
-
-            $task->update();
-
-            if ($this->include('creator')) {
-                return new TaskResource($task->load('user'));
-            }
-            return new TaskResource($loan);
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('Task cannot be found', 404);
+        if ($this->include('creator')) {
+            return new TaskResource($task->load('user'));
         }
+        return new TaskResource($task);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($task_id)
+    public function destroy(Task $task)
     {
-        try {
-            $task = Task::findOrFail($task_id);
-            $task->delete();
-
-            return $this->ok('Task deleted');
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('Task not found.', 404);
-        }
+        $task->delete();
+        return $this->ok('Task deleted');
     }
 }

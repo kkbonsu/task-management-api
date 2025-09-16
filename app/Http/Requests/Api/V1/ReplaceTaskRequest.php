@@ -21,27 +21,23 @@ class ReplaceTaskRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
-            'data.attributes.title' => 'required|string',
-            'data.attributes.description' => 'required|string',
-            'data.attributes.status' => 'required|string',
+        return [
+            'user_id' => 'required|exists:users,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'status' => 'required|in:pending,in_progress,completed',
         ];
-
-        if ($this->routeIs('tasks.store')) {
-            $rules['data.relationships.creator.data.id'] = 'required|interger';
-        }
-
-        return $rules;
     }
 
     public function messages(): array
     {
         return [
-            'data.attributes.title.required' => 'The title is required.',
-            'data.attributes.description.required' => 'The description is required.',
-            'data.attributes.status.required' => 'The status is required.',
-            'data.relationships.creator.data.id.required' => 'The creator ID is required.',
-            'data.relationships.creator.data.id.exists' => 'The specified creator does not exist.',
+            'user_id.required' => 'The user ID is required.',
+            'user_id.exists' => 'The specified user does not exist.',
+            'title.required' => 'The title is required.',
+            'description.required' => 'The description is required.',
+            'status.required' => 'The status is required.',
+            'status.in' => 'The status must be one of: pending, in_progress, completed.',
         ];
     }
 }
