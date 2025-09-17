@@ -42,6 +42,7 @@ class AuthController extends Controller
         return $this->ok(
             'Authenticated',
             [
+                'user' => $user,
                 'token' => $user->createToken(
                     'api_token' . $user->email,
                     ['*'],
@@ -86,6 +87,7 @@ class AuthController extends Controller
         return $this->ok(
             'User registered successfully',
             [
+                'user' => $user,
                 'token' => $user->createToken(
                     'api_token' . $user->email,
                     ['*'],
